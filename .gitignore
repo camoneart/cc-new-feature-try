@@ -1,2 +1,5 @@
 # 実装ログ（ローカル作業記録）
 _docs/templates/
+
+# Agent Teams フックログ
+trial-report-hooks.log
