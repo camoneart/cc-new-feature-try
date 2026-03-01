@@ -1,2 +1,8 @@
 # 実装ログ（ローカル作業記録）
 _docs/templates/
+
+# ローカルスコープのエージェントメモリ
+.claude/agent-memory-local/
+
+# ローカル設定
+CLAUDE.local.md
