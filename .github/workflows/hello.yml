@@ -1,0 +1,24 @@
+# GitHub Actions 動作確認用の最小ワークフロー
+# Issue #86: Step 1 - まず Actions 自体が動くか確認する
+name: Hello World
+
+on:
+  push:
+    branches:
+      - issue-86-github-actions-auto-review
+  workflow_dispatch: # 手動実行も可能にしておく
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello from GitHub Actions
+        run: echo "Hello from GitHub Actions! The workflow is working."
+
+      - name: Show environment info
+        run: |
+          echo "Runner OS: $RUNNER_OS"
+          echo "GitHub Actor: $GITHUB_ACTOR"
+          echo "GitHub Repository: $GITHUB_REPOSITORY"
+          echo "GitHub Ref: $GITHUB_REF"
+          echo "GitHub SHA: $GITHUB_SHA"
