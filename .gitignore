@@ -3,3 +3,9 @@ _docs/templates/
 
 # Node.js
 node_modules/
+
+# ローカルスコープのエージェントメモリ
+.claude/agent-memory-local/
+
+# Worktree用ローカルコンテキスト
+CLAUDE.local.md
