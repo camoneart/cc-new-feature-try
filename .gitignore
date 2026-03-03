@@ -1,6 +1,9 @@
 # 実装ログ（ローカル作業記録）
 _docs/templates/
 
+# Node.js
+node_modules/
+
 # ローカルスコープのエージェントメモリ
 .claude/agent-memory-local/
 
