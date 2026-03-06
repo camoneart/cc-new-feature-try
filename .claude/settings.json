@@ -7,5 +7,17 @@
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": ["Thinking"]
+  },
+  "hooks": {
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); echo \"[$(date '+%Y-%m-%d %H:%M:%S')] file=$(echo $INPUT | jq -r .file_path) type=$(echo $INPUT | jq -r .memory_type) reason=$(echo $INPUT | jq -r .load_reason)\" >> /tmp/instructions-log.txt"
+          }
+        ]
+      }
+    ]
   }
 }
