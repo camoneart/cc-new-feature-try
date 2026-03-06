@@ -1,73 +1,64 @@
-# Issue #96: 推論努力度の表示（ロゴ/スピナー表示）試行レポート
+# Trial Report: Worktree統合機能 (Issue #2)
 
-## 概要
+## 試行バージョン
 
-Claude Code v2.1.69 で追加された「推論努力度のロゴ/スピナー表示」機能を試行し、動作状況を調査した。
+- Claude Code: v2.1.50
+- 試行日: 2026-02-21
 
-## 対象バージョン
+## 試行した機能
 
-- Claude Code v2.1.69
+### 1. `--worktree` / `-w` CLIフラグ
 
-## リリースノート記載内容
+**概要**: Claude Code 起動時に隔離された git worktree を自動作成する機能。
 
-> Added effort level display (e.g., "with low effort") to the logo and spinner, making it easier to see which effort setting is active
+**確認結果**:
+- `claude --help` にて `-w, --worktree [name]` フラグを確認
+- `--tmux` フラグとの併用が可能（iTerm2ではnative pane、それ以外はtmux）
+- ネストしたClaude Codeセッションの起動は安全上の理由で制限されている
 
-## 試行結果
+### 2. `EnterWorktree` ツール
 
-### 確認した操作
+**概要**: セッション中にプログラム的に新しい worktree へ切り替える機能。
 
-| 操作 | 期待される表示 | 実際の表示 | 結果 |
-|------|--------------|-----------|------|
-| `/model` で high effort に設定 | スピナーに `with high effort` | `* Thinking…` のみ | NG |
-| `/model` で low effort に設定 | スピナーに `with low effort` | `* Whisking…` のみ | NG |
-| `spinnerVerbs` カスタム設定を削除して再試行 | 努力度表示が出る | デフォルトスピナー動詞のみ | NG |
+**確認結果**:
+- worktree 内からでも新しい worktree を作成可能（ネスト制約なし）
+- 新しい worktree はメインリポジトリの `.claude/worktrees/<name>` に作成される
+- ブランチ名は `worktree-<name>` 形式で自動生成
+- CWD が自動的に新しい worktree に切り替わる
+- セッション終了時、変更がなければ自動クリーンアップ
 
-### `/model` コマンドの出力
+### 3. サブエージェント `isolation: "worktree"`
 
-`/model` コマンド実行時には努力度が表示されることを確認：
+**概要**: Task ツールで `isolation: "worktree"` を指定し、サブエージェントを隔離環境で実行する機能。
 
-```
-Set model to Default (Opus 4.6 · Most capable for complex work) with high effort
-Set model to Default (Opus 4.6 · Most capable for complex work) with low effort
-```
+**確認結果**:
+- サブエージェントごとに `agent-<hash>` 形式の一意な worktree が自動生成
+- 専用ブランチ `worktree-agent-<hash>` で完全に隔離
+- サブエージェントが作成したファイルは他の worktree に一切影響しない
+- 変更があった場合は worktree が保持され、パスとブランチ名が返却される
+- 変更がなければ自動クリーンアップ
+- 2段ネスト（worktree > サブエージェント worktree）も動作確認済み
 
-ただし、これはスピナーではなく `/model` コマンドの結果メッセージ。
+### 4. メイン working tree への影響確認
 
-## 原因調査
+**確認結果**:
+- サブエージェントが `isolation-test.txt` を作成
+- メインリポジトリ、issue-2 worktree、EnterWorktree で作成した worktree のいずれにもファイルは存在しない
+- サブエージェントの worktree 内にのみファイルが存在することを確認
+- 各 worktree の `git status` にも影響なし
 
-### spinnerVerbs の影響
+## 総合評価
 
-`~/.claude/settings.json` に以下のカスタム設定があったため、最初はこれが原因と仮定した：
+**すべての試行項目が正常に動作。**
 
-```json
-"spinnerVerbs": {
-  "mode": "replace",
-  "verbs": ["Thinking"]
-}
-```
+Worktree統合機能は、以下のユースケースで特に有用:
 
-しかし、この設定を削除しデフォルトのスピナーに戻しても努力度は表示されなかった。**spinnerVerbs は努力度表示に影響しない**（別のUI層で処理されるため）。
+1. **並行開発**: 複数の issue を別々の worktree で同時作業
+2. **安全なサブエージェント実行**: `isolation: "worktree"` により、サブエージェントの変更が本番コードに影響しない
+3. **実験的変更**: EnterWorktree でいつでも隔離環境を作成し、気に入らなければ破棄
 
-### 既知のバグ（GitHub Issues）
+## 注意点
 
-調査の結果、この問題は既知のバグとして複数報告されていることが判明した：
-
-| Issue | タイトル | ステータス |
-|-------|---------|-----------|
-| [#28467](https://github.com/anthropics/claude-code/issues/28467) | Reasoning effort level not displayed on session start and not persisted across sessions | OPEN |
-| [#26950](https://github.com/anthropics/claude-code/issues/26950) | Cannot inspect or reliably control reasoning effort level | OPEN |
-| [#30726](https://github.com/anthropics/claude-code/issues/30726) | `effortLevel: "max"` automatically downgraded | OPEN |
-
-**Issue #28467 が本件と最も関連が深い。** セッション起動時に努力度表示がリセットされ、スピナーに反映されない問題が報告されている。
-
-## 結論
-
-- v2.1.69 で努力度表示は**実装されたが、不完全な状態**でリリースされている
-- スピナーへの努力度表示は**既知のバグにより正常に動作しない**（Issue #28467）
-- `/model` コマンドの結果メッセージには努力度が表示される（これは正常動作）
-- `spinnerVerbs` のカスタム設定は本件に無関係
-
-## 今後のアクション
-
-- Issue #28467 の修正を待つ
-- 修正リリース後に再試行する
+- ネストした Claude Code セッション（`claude` コマンドの入れ子）は安全上の理由で制限される
+- worktree は同じ `.git` データベースを共有するため、ブランチの重複チェックアウトはできない
+- `--tmux` は `--worktree` との併用が前提
