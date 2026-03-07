@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "includeGitInstructions": false,
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": ["Thinking"]
+  },
+  "hooks": {
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); echo \"[$(date '+%Y-%m-%d %H:%M:%S')] file=$(echo $INPUT | jq -r .file_path) type=$(echo $INPUT | jq -r .memory_type) reason=$(echo $INPUT | jq -r .load_reason)\" >> /tmp/instructions-log.txt"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/camone/dev/claude-code/claude-code-learn/cc-changelog-ja/_cc-new-feature-try-worktrees/issue-101-hook-agent-id-type/hook-agent-dump.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
