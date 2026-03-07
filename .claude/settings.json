@@ -18,6 +18,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/camone/dev/claude-code/claude-code-learn/cc-changelog-ja/_cc-new-feature-try-worktrees/issue-101-hook-agent-id-type/hook-agent-dump.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
